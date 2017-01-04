@@ -7,7 +7,6 @@ Created on Tue Jan  3 09:58:06 2017
 
 import pandas as pd
 from pandas_datareader import data as web
-from pandas_datareader._utils import RemoteDataError
 import datetime
 
 
@@ -24,11 +23,12 @@ def update_data(sym,source):
         start = datetime.datetime(1900,1,30)
     end = None
     if start.date() != datetime.datetime.now().date():
-        try:
+        if not _get_cboe_url(sym):
             df = web.DataReader(sym,source,start,end).round(2)
-        except RemoteDataError:
+        else:
             df = _get_cboe_data(sym)
-            df = df[df.index > df1.iloc[-1,0]]
+            if not df1.empty: 
+                df = df[df.index > df1.iloc[-1,0]]
         if not df.empty:
             if df1.empty:
                 df.to_csv('%s.csv'%file_sym)
@@ -46,7 +46,10 @@ def _get_cboe_data(sym):
 def _get_cboe_url(sym):
     urls = {'^VXST':'http://www.cboe.com/publish/scheduledtask/mktdata/datahouse/vxstcurrent.csv'
             }
-    return urls[sym]
+    if sym in urls:
+        return urls[sym]
+    else:
+        return None
             
 if __name__=='__main__':
     syms = ['VXX','^VIX','^VXV','^VXST','SPY']
