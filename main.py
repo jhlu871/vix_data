@@ -10,19 +10,21 @@ from pandas_datareader import data as web
 import datetime
 
 
-def update_data(sym,source):
-    file_sym = sym.replace('^','')
+def update_data(syms,source,filename='data.xlsx'):
+    writer = pd.ExcelWriter(filename,engine='xlsxwriter')
     start = datetime.datetime(1900,1,30)
     end = None
-    if not _get_cboe_url(sym):
-        df = web.DataReader(sym,source,start,end).round(2)
-    else:
-        df = _get_cboe_data(sym)
-    if not df.empty:
-        df.to_csv('%s.csv'%file_sym)
-    else:
-        print('Error: no data for %s' % file_sym)
-    print('%s updated' % file_sym)
+    for sym in syms:
+        file_sym = sym.replace('^','')
+        if not _get_cboe_url(sym):
+            df = web.DataReader(sym,source,start,end).round(2)
+        else:
+            df = _get_cboe_data(sym)
+        if not df.empty:
+            df.to_excel(writer,file_sym)
+        else:
+            print('Error: no data for %s' % file_sym)
+        print('%s updated' % file_sym)
 
 def _get_cboe_data(sym):
     df = pd.read_csv(_get_cboe_url(sym),skiprows=3)
@@ -40,8 +42,8 @@ def _get_cboe_url(sym):
 if __name__=='__main__':
     syms = ['VXX','^VIX','^VXV','^VXST','SPY','^SP500TR']
     src = 'yahoo'
-    for sym in syms:
-        update_data(sym,src)
+    filename = 'data.xlsx'
+    update_data(syms,src,filename)
         
 
         
